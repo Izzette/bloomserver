@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 	"unicode/utf8"
@@ -114,10 +115,15 @@ func NewBloomHTTPServer(o Options) (s *BloomHTTPServer) {
 }
 
 func (s *BloomHTTPServer) Start() {
+	if s.Options.ListenAddressNetwork() == "unix" {
+		// We don't really care about the error, if we didn't succeed in removing, we should just try to listen instead.
+		_ = os.Remove(s.Options.ListenAddressAddress())
+	}
 	listener, err := net.Listen(s.Options.ListenAddressNetwork(), s.Options.ListenAddressAddress())
 	if err != nil {
 		log.Panicf("Could not bind to socket (%s): %s\n", s.Options.ListenAddress, err.Error())
 	}
+	log.Printf("Listening on %s (%s) ...\n", s.Options.ListenAddressAddress(), s.Options.ListenAddressNetwork())
 
 	go func() {
 		defer listener.Close()

@@ -83,7 +83,7 @@ func (o *Options) parseListenAddress() {
 			o.listenAddressPort = uint16(portInt)
 		}
 	case "unix":
-		o.listenAddressPath = listenAddressURL.Opaque
+		o.listenAddressPath = listenAddressURL.Path
 	default:
 		log.Fatalf("Unsupported protocol (%s) for ListenAddress (%s)!\n", o.listenAddressNetwork, o.ListenAddress)
 	}
