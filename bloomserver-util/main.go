@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"log"
 	"os"
@@ -49,6 +50,31 @@ func main() {
 		f := bloom.FromFile(*bloomFilterFile)
 		for _, word := range args[1:] {
 			f.Filter.Add([]byte(word))
+		}
+
+		saveToFile(f, *bloomFilterFile)
+	case "addAll":
+		if len(args) != 2 {
+			log.Fatal("Must provide exactly two arguments to addAll.")
+		}
+
+		f := bloom.FromFile(*bloomFilterFile)
+
+		var scanner *bufio.Scanner
+		if wordFile, err := os.OpenFile(args[1], os.O_RDONLY, 0); err != nil {
+			log.Panicf("Failed to open word-list file (%s): %s\n", args[1], err.Error())
+		} else {
+			defer wordFile.Close()
+			scanner = bufio.NewScanner(bufio.NewReader(wordFile))
+		}
+
+		for scanner.Scan() {
+			word := scanner.Text()
+
+			f.Filter.Add([]byte(word))
+		}
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Encountered error while scanning word-list file (%s): %s\n", args[1], err.Error())
 		}
 
 		saveToFile(f, *bloomFilterFile)
