@@ -11,13 +11,13 @@ go get github.com/Izzette/bloomserver
 go get github.com/Izzette/bloomserver/bloomserver-util
 
 # Create a new bloom filter file (10,000,000 bits (~1.2MiB), 7 hash functions ≅ 1% false positive ratio)
-~/go/bin/bloomserver-util -bloom-filter-file filter.bfdat new 10000000 7
+~/go/bin/bloomserver-util -bloom-filter-file filter.bfdat create 10000000 7
 
 # Grab your favorite leaked passwords list (one per line)
 curl -LO https://github.com/danielmiessler/SecLists/raw/master/Passwords/Common-Credentials/10-million-password-list-top-1000000.txt
 
 # Populate the bloom filter file with the passwords list
-~/go/bin/bloomserver-util -bloom-filter-file filter.bfdat addAll 10-million-password-list-top-1000000.txt
+~/go/bin/bloomserver-util -bloom-filter-file filter.bfdat add 10-million-password-list-top-1000000.txt
 
 # Start a server on http://127.0.0.1:14519
 ~/go/bin/bloomserver -bloom-filter-file filter.bfdat -listen-address tcp://127.0.0.1:14519 &

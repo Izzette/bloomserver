@@ -3,11 +3,15 @@ package main
 import (
 	"bufio"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 
 	"github.com/Izzette/bloomserver/bloom"
+
+	"code.cloudfoundry.org/bytefmt"
+	willf_bloom "github.com/willf/bloom"
 )
 
 func main() {
@@ -20,14 +24,14 @@ func main() {
 		log.Panic("Must specify an action")
 	}
 
-	if *bloomFilterFile == "" {
-		log.Fatal("Must provide a value for -bloom-filter-file")
-	}
-
 	switch args[0] {
-	case "new":
+	case "create":
 		if len(args) != 3 {
-			log.Fatal("Must provide exactly two arguments to the `new` action.")
+			log.Fatal("Must provide exactly two arguments to the `create` action.")
+		}
+
+		if *bloomFilterFile == "" {
+			log.Fatal("Must provide a value for -bloom-filter-file")
 		}
 
 		m, err := strconv.ParseUint(args[1], 10, 0)
@@ -43,19 +47,12 @@ func main() {
 
 		saveToFile(f, *bloomFilterFile)
 	case "add":
-		if len(args) <= 1 {
-			log.Fatal("Must provide at least one word to add.")
-		}
-
-		f := bloom.FromFile(*bloomFilterFile)
-		for _, word := range args[1:] {
-			f.Filter.Add([]byte(word))
-		}
-
-		saveToFile(f, *bloomFilterFile)
-	case "addAll":
 		if len(args) != 2 {
-			log.Fatal("Must provide exactly two arguments to addAll.")
+			log.Fatal("Must provide exactly two arguments to the `add` action.")
+		}
+
+		if *bloomFilterFile == "" {
+			log.Fatal("Must provide a value for -bloom-filter-file")
 		}
 
 		f := bloom.FromFile(*bloomFilterFile)
@@ -78,6 +75,39 @@ func main() {
 		}
 
 		saveToFile(f, *bloomFilterFile)
+	case "estimate":
+		if len(args) != 3 {
+			log.Fatal("Must provide exactly two arguments to the `estimate` action.")
+		}
+
+		var n uint
+		if n64, err := strconv.ParseUint(args[1], 10, 0); err != nil {
+			log.Fatalf("Couldn't parse estimated number of entries (%s): %s\n", args[1], err.Error())
+		} else {
+			n = uint(n64)
+		}
+
+		var p float64
+		if p64, err := strconv.ParseFloat(args[2], 64); err != nil {
+			log.Fatalf("Couldn't parse acceptable false-positive ratio (%s): %s\n", args[2], err.Error())
+		} else {
+			p = p64
+		}
+
+		m, k := willf_bloom.EstimateParameters(n, p)
+
+		mBytes := m / 8
+		if m%8 != 0 {
+			mBytes += 1
+		}
+		mBytesInUint64 := 8 * (mBytes / 8)
+		if mBytes%8 != 0 {
+			mBytesInUint64 += 8
+		}
+
+		estimatedBytesSize := uint64(mBytesInUint64) + uint64(len(bloom.BLOOM_FILTER_MAGIC)) + 16
+
+		fmt.Printf("M (number of bits): %d (~%siB), K (number of hash functions): %d\n", m, bytefmt.ByteSize(estimatedBytesSize), k)
 	default:
 		log.Fatalf("Unknown action: %s\n", args[0])
 	}
