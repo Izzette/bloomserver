@@ -62,6 +62,14 @@ func (f *BloomFilter) Save(file *os.File) {
 	f.Filter.WriteTo(file)
 }
 
+func (f *BloomFilter) GetM() uint {
+	return f.m
+}
+
+func (f *BloomFilter) GetK() uint {
+	return f.k
+}
+
 func parseFilterFile(file *os.File) (size uint, k uint) {
 	magicBytes := []byte(BLOOM_FILTER_MAGIC)
 	headerBytes := make([]byte, len(magicBytes))

@@ -108,6 +108,20 @@ func main() {
 		estimatedBytesSize := uint64(mBytesInUint64) + uint64(len(bloom.BLOOM_FILTER_MAGIC)) + 16
 
 		fmt.Printf("M (number of bits): %d (~%siB), K (number of hash functions): %d\n", m, bytefmt.ByteSize(estimatedBytesSize), k)
+	case "show":
+		if len(args) != 1 {
+			log.Fatal("The `show` action accepts zero arguments.")
+		}
+
+		if *bloomFilterFile == "" {
+			log.Fatal("Must provide a value for -bloom-filter-file")
+		}
+
+		f := bloom.FromFile(*bloomFilterFile)
+		m := f.GetM()
+		k := f.GetK()
+
+		fmt.Printf("%s: M (number of bits): %d, K (number of hash functions): %d\n", *bloomFilterFile, m, k)
 	default:
 		log.Fatalf("Unknown action: %s\n", args[0])
 	}
